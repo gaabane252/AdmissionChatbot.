@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" fill="none">
+  <defs>
+    <linearGradient id="snuSkyGrad" x1="200" y1="50" x2="200" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="snuGoldGrad" x1="0" y1="0" x2="400" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="80%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#92400E" />
+    </linearGradient>
+    <linearGradient id="snuCrimsonGrad" x1="50" y1="400" x2="350" y2="460" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#B91C1C" />
+      <stop offset="50%" stop-color="#881337" />
+      <stop offset="100%" stop-color="#7F1D1D" />
+    </linearGradient>
+    <linearGradient id="bookPageGrad" x1="100" y1="200" x2="300" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="85%" stop-color="#F1F5F9" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+    <linearGradient id="beaconGrad" x1="200" y1="80" x2="200" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDBA74" />
+      <stop offset="50%" stop-color="#FB923C" />
+      <stop offset="100%" stop-color="#E29578" />
+    </linearGradient>
+  </defs>
+  <path d="M 200 45 C 310 110, 360 220, 320 395 C 275 425, 125 425, 80 395 C 40 220, 90 110, 200 45 Z" fill="url(#snuSkyGrad)" stroke="url(#snuGoldGrad)" stroke-width="8"/>
+  <path d="M 182 95 L 218 95 L 214 380 L 186 380 Z" fill="url(#beaconGrad)"/>
+  <circle cx="200" cy="190" r="32" fill="#92400E" opacity="0.85" />
+  <path d="M 100 200 C 145 210, 185 225, 200 232 C 215 225, 255 210, 300 200 L 292 345 C 250 355, 215 342, 200 338 C 185 342, 150 355, 108 345 Z" fill="#92400E" stroke="url(#snuGoldGrad)" stroke-width="4"/>
+  <path d="M 104 205 C 148 214, 184 227, 198 233 L 198 335 C 184 329, 148 316, 112 340 Z" fill="url(#bookPageGrad)"/>
+  <path d="M 296 205 C 252 214, 216 227, 202 233 L 202 335 C 216 329, 252 316, 288 340 Z" fill="url(#bookPageGrad)"/>
+  <g stroke="url(#snuGoldGrad)" stroke-linecap="round" fill="none">
+    <line x1="200" y1="120" x2="200" y2="230" stroke-width="6" />
+    <line x1="120" y1="140" x2="280" y2="140" stroke-width="6.5" />
+    <path d="M 92 245 C 92 275, 150 275, 150 245 Z" fill="url(#snuGoldGrad)" />
+    <path d="M 250 245 C 250 275, 308 275, 308 245 Z" fill="url(#snuGoldGrad)" />
+  </g>
+  <path d="M 200 12 L 208 34 L 232 34 L 213 48 L 220 70 L 200 56 L 180 70 L 187 48 L 168 34 L 192 34 Z" fill="#FFFFFF" stroke="url(#snuGoldGrad)" stroke-width="2.5"/>
+  <path d="M 65 420 C 130 400, 270 400, 335 420 C 345 442, 330 455, 310 458 C 240 442, 160 442, 90 458 C 70 455, 55 442, 65 420 Z" fill="url(#snuCrimsonGrad)" stroke="url(#snuGoldGrad)" stroke-width="3.5"/>
+  <text x="200" y="443" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold" font-family="sans-serif">SNU</text>
+</svg>
