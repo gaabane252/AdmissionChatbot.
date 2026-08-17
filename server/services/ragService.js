@@ -18,29 +18,52 @@ function getGenAI() {
 
 export const ragService = {
   /**
-   * Search knowledge base for relevant chunks
+   * Search knowledge base for relevant chunks with hybrid fallback
    */
-  async searchKnowledgeBase(query, matchThreshold = 0.25, matchCount = 4) {
+  async searchKnowledgeBase(query, matchThreshold = 0.15, matchCount = 5) {
     try {
       const supabase = getSupabase();
       const queryEmbedding = await embeddingService.generateEmbedding(query);
 
+      // 1. Vector Semantic Match
       const { data: matchedChunks, error } = await supabase.rpc('match_document_chunks', {
         query_embedding: queryEmbedding,
         match_threshold: matchThreshold,
         match_count: matchCount,
       });
 
-      if (error) {
-        console.warn('RPC match_document_chunks warning (direct query fallback):', error.message);
-        const { data: docs } = await supabase
-          .from('document_chunks')
-          .select('id, document_id, content, metadata')
-          .limit(4);
-        return docs || [];
+      if (!error && Array.isArray(matchedChunks) && matchedChunks.length > 0) {
+        return matchedChunks;
       }
 
-      return matchedChunks || [];
+      // 2. Keyword Search Fallback
+      const keywords = query
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+        .slice(0, 3);
+
+      if (keywords.length > 0) {
+        let queryBuilder = supabase
+          .from('document_chunks')
+          .select('id, document_id, content, metadata')
+          .limit(matchCount);
+
+        const filterConditions = keywords.map(kw => `content.ilike.%${kw}%`).join(',');
+        const { data: keywordChunks } = await queryBuilder.or(filterConditions);
+
+        if (keywordChunks && keywordChunks.length > 0) {
+          return keywordChunks;
+        }
+      }
+
+      // 3. Fallback to Latest Available Knowledge Chunks
+      const { data: fallbackDocs } = await supabase
+        .from('document_chunks')
+        .select('id, document_id, content, metadata')
+        .limit(matchCount);
+
+      return fallbackDocs || [];
     } catch (err) {
       console.error('Search Knowledge Base Error:', err);
       return [];

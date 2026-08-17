@@ -19,19 +19,22 @@ export const embeddingService = {
     const ai = getGenAI();
 
     if (ai && process.env.GEMINI_API_KEY) {
-      try {
-        const response = await ai.models.embedContent({
-          model: 'gemini-embedding-001',
-          contents: text,
-        });
+      const modelsToTry = ['text-embedding-004', 'embedding-001', 'gemini-embedding-001'];
+      for (const modelName of modelsToTry) {
+        try {
+          const response = await ai.models.embedContent({
+            model: modelName,
+            contents: text,
+          });
 
-        const values = response?.embeddings?.[0]?.values || response?.embedding?.values;
-        if (values && Array.isArray(values) && values.length > 0) {
-          // Adjust to 768 dimensions for pgvector schema
-          return values.length >= 768 ? values.slice(0, 768) : values;
+          const values = response?.embeddings?.[0]?.values || response?.embedding?.values;
+          if (values && Array.isArray(values) && values.length > 0) {
+            // Adjust to 768 dimensions for pgvector schema
+            return values.length >= 768 ? values.slice(0, 768) : values;
+          }
+        } catch (error) {
+          // Try next model
         }
-      } catch (error) {
-        console.warn('Gemini API Embedding Error, using deterministic fallback:', error.message);
       }
     }
 
