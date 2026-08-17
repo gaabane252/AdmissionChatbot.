@@ -24,19 +24,27 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use('/api/documents', documentRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Serve static frontend in production if dist folder exists
-const distPath = path.resolve(__dirname, '../dist');
-app.use(express.static(distPath));
-
-// SPA fallback for client-side routing
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(distPath, 'index.html'), (err) => {
-    if (err) next();
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'SNU AI Admission Portal Backend API',
+    message: 'Server is running smoothly! 🚀',
+    time: new Date()
   });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'SNU AI Backend Server', time: new Date() });
+});
+
+// Fallback 404 for unknown API routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found on SNU AI Backend' });
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 SNU AI Express Server running on http://localhost:${PORT}`);
 });
+
 
