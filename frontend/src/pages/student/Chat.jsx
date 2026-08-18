@@ -144,9 +144,13 @@ const Chat = () => {
         .from('messages')
         .insert([{ conversation_id: convId, role: 'user', content: trimmedContent }]);
 
-      // 4. Query Express Backend with Gemini RAG pipeline (with 1 retry for Render cold-starts)
-      try {
-        let res = null;
+      // 4. Query Express Backend with Gemini RAG pipeline (with robust retries for Render cold-starts & 502/503 statuses)
+      let res = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (attempts < maxAttempts) {
+        attempts++;
         try {
           res = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
@@ -157,21 +161,24 @@ const Chat = () => {
               userId: user.id,
             }),
           });
-        } catch (firstErr) {
-          console.warn('Initial fetch to Render failed (possibly waking up), retrying in 3s...', firstErr);
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-          res = await fetch(`${API_BASE_URL}/api/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: trimmedContent,
-              conversationId: convId,
-              userId: user.id,
-            }),
-          });
+
+          if (res && res.ok) {
+            break; // Successfully got 200 OK from AI Backend
+          } else {
+            console.warn(`Attempt ${attempts}: Render backend returned status ${res?.status}`);
+          }
+        } catch (fetchErr) {
+          console.warn(`Attempt ${attempts} network error reaching Render backend:`, fetchErr);
         }
 
-        if (res.ok) {
+        if (attempts < maxAttempts) {
+          console.warn(`Render server waking up... retrying attempt ${attempts + 1} in 4s`);
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+        }
+      }
+
+      try {
+        if (res && res.ok) {
           const data = await res.json();
           const aiMsg = data.message || {
             id: Date.now().toString(),
@@ -182,7 +189,7 @@ const Chat = () => {
           };
           setMessages((prev) => [...prev, { ...aiMsg, sources: data.sources }]);
         } else {
-          throw new Error('Backend server returned non-200');
+          throw new Error(`Backend server unavailable after ${maxAttempts} attempts`);
         }
       } catch (backendErr) {
         console.warn('Backend server offline, executing graceful fallback:', backendErr);
