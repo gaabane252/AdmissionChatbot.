@@ -31,6 +31,11 @@ const Chat = () => {
     scrollToBottom();
   }, [messages, aiLoading]);
 
+  // Pre-warm backend server (wakes up Render free-tier if asleep)
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/health`).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     fetchConversations();
@@ -139,17 +144,32 @@ const Chat = () => {
         .from('messages')
         .insert([{ conversation_id: convId, role: 'user', content: trimmedContent }]);
 
-      // 4. Query Express Backend with Gemini RAG pipeline
+      // 4. Query Express Backend with Gemini RAG pipeline (with 1 retry for Render cold-starts)
       try {
-        const res = await fetch(`${API_BASE_URL}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: trimmedContent,
-            conversationId: convId,
-            userId: user.id,
-          }),
-        });
+        let res = null;
+        try {
+          res = await fetch(`${API_BASE_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: trimmedContent,
+              conversationId: convId,
+              userId: user.id,
+            }),
+          });
+        } catch (firstErr) {
+          console.warn('Initial fetch to Render failed (possibly waking up), retrying in 3s...', firstErr);
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          res = await fetch(`${API_BASE_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: trimmedContent,
+              conversationId: convId,
+              userId: user.id,
+            }),
+          });
+        }
 
         if (res.ok) {
           const data = await res.json();
