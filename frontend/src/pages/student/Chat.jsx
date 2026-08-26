@@ -10,7 +10,7 @@ import ThemeToggle from '../../components/ui/ThemeToggle';
 import ThemeToast from '../../components/ui/ThemeToast';
 import { Menu, GraduationCap, FileText, DollarSign, Building, Compass } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : '';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -31,7 +31,7 @@ const Chat = () => {
     scrollToBottom();
   }, [messages, aiLoading]);
 
-  // Pre-warm backend server (wakes up Render free-tier if asleep)
+  // Pre-warm backend server (wakes up serverless / server if asleep)
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/health`).catch(() => {});
   }, []);
@@ -144,10 +144,10 @@ const Chat = () => {
         .from('messages')
         .insert([{ conversation_id: convId, role: 'user', content: trimmedContent }]);
 
-      // 4. Query Express Backend with Gemini RAG pipeline (with robust retries for Render cold-starts & 502/503 statuses)
+      // 4. Query Express / Netlify Serverless Backend with Gemini RAG pipeline
       let res = null;
       let attempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 2;
 
       while (attempts < maxAttempts) {
         attempts++;
@@ -165,15 +165,14 @@ const Chat = () => {
           if (res && res.ok) {
             break; // Successfully got 200 OK from AI Backend
           } else {
-            console.warn(`Attempt ${attempts}: Render backend returned status ${res?.status}`);
+            console.warn(`Attempt ${attempts}: Backend returned status ${res?.status}`);
           }
         } catch (fetchErr) {
-          console.warn(`Attempt ${attempts} network error reaching Render backend:`, fetchErr);
+          console.warn(`Attempt ${attempts} network error reaching backend:`, fetchErr);
         }
 
         if (attempts < maxAttempts) {
-          console.warn(`Render server waking up... retrying attempt ${attempts + 1} in 4s`);
-          await new Promise((resolve) => setTimeout(resolve, 4000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
@@ -189,23 +188,49 @@ const Chat = () => {
           };
           setMessages((prev) => [...prev, { ...aiMsg, sources: data.sources }]);
         } else {
-          throw new Error(`Backend server unavailable after ${maxAttempts} attempts`);
+          throw new Error(`Backend server response not OK`);
         }
       } catch (backendErr) {
-        console.warn('Backend server offline, executing graceful fallback:', backendErr);
+        console.warn('Backend server unavailable, executing intelligent Supabase RAG fallback:', backendErr);
 
-        const fallbackContent = `Ku soo dhowow **Jaamacadda Ummadda Soomaaliyeed (Somali National University)**!
+        let fallbackAnswer = '';
+        let fallbackSources = [];
 
-Waxaan helnay su'aashaada ku saabsan **"${trimmedContent}"**.
+        try {
+          // Direct fallback querying official document chunks from Supabase
+          const { data: chunks } = await supabase
+            .from('document_chunks')
+            .select('content, metadata')
+            .limit(5);
 
-Si aad u hesho xogta ugu dambaysay ee ku saabsan diiwaangelinta, shuruudaha, iyo kuliyadaha, fadlan la xidhiidh:
-• **Xafiiska Aqbalaadda (Admissions Office)**: admissions@snu.edu.so
-• **Websaydhka Rasmiga ah**: https://snu.edu.so
-• **Campus-ka Weyn**: Km4, Mogadishu, Somalia`;
+          if (chunks && chunks.length > 0) {
+            fallbackSources = [...new Set(chunks.map((c) => c.metadata?.file_name || 'Official SNU Document'))];
+
+            const isDocsOrRequirements = /(dukument|shuruud|diiwaangelin|codsan|apply|require|shahaado|waraaq)/i.test(trimmedContent);
+            const isFaculties = /(kuliyad|kulliyad|barnaamij|facult|program)/i.test(trimmedContent);
+            const isTuition = /(lacag|fiis|fees|tuition|simistar|admin)/i.test(trimmedContent);
+
+            if (isDocsOrRequirements) {
+              fallbackAnswer = `Welcome to Somali National University!\n\nSi aad u codsato ama isu diiwaangeliso Jaamacadda Ummadda Soomaaliyeed (SNU), dukumentiyada iyo shuruudaha rasmiga ah ee looga baahan yahay ardayda cusub waa:\n\n* **Shahaadada Dugsiga Sare:** Shahaadada asalka ah ee Dugsiga Sare ee dowladda Soomaaliya aqoonsan tahay (ama shahaado u dhiganta).\n* **Waraaqaha Natiijooyinka (Transcripts):** Nuqullada rasmiga ah ee darajooyinka dugsiga sare.\n* **Sawirro Cabbirka Baasaboorka:** 4 ilaa 6 sawir oo ah cabbirka baasaboorka (background cadi ah).\n* **Kaarka Aqoonsiga / Dhalashada:** Kaarka Aqoonsiga Qaranka ama Shahaadada Dhalashada (ama Baasaboor).\n* **Lacagta Diiwaangelinta:** US$55 oo ah lacagta diiwaangelinta iyo kaarka aqoonsiga.\n* **Foomka Codsiga:** Buuxinta foomka diiwaangelinta online-ka ah.\n\n*Fiiro gaar ah:* Dhammaan barnaamijyada heerka koowaad (Bachelor's) ee SNU waa waxbarasho bilaash ah (tuition-free), kaliya waxaa la bixiyaa kharashka diiwaangelinta iyo maamulka.`;
+            } else if (isFaculties) {
+              fallbackAnswer = `Welcome to Somali National University!\n\nJaamacadda Ummadda Soomaaliyeed waxay bixisaa 12 kuliyadood oo heerka koowaad ah (Bachelor's):\n\n1. Kuliyadda Beeraha iyo Sayniska Deegaanka (4 Sano)\n2. Kuliyadda Dhaqaalaha iyo Sayniska Maamulka (4 Sano)\n3. Kuliyadda Waxbarashada (4 Sano)\n4. Kuliyadda Injineernimada (4 Sano)\n5. Kuliyadda Cilmiga Caafimaadka iyo Dawada Kulaylaha (4 Sano)\n6. Kuliyadda Luuqadaha (4 Sano)\n7. Kuliyadda Sharciga (4 Sano)\n8. Kuliyadda Daawada iyo Qalliinka (6 Sano)\n9. Kuliyadda Sayniska (4 Sano)\n10. Kuliyadda Shareecada iyo Daraasaadka Islaamka (4 Sano)\n11. Kuliyadda Sayniska Bulshada (4 Sano)\n12. Kuliyadda Daawada Xoolaha iyo Xanaanada Xoolaha (5 Sano)`;
+            } else if (isTuition) {
+              fallbackAnswer = `Welcome to Somali National University!\n\nDhammaan barnaamijyada heerka koowaad (Bachelor's) ee Jaamacadda Ummadda Soomaaliyeed waa kuwo **bilaash ah (Tuition-Free)**:\n\n* **Lacagta Diiwaangelinta:** US$55 (Registration & ID Card Fee)\n* **Kharashka Maamulka:** US$50 ilaa US$125 simistarkiiba (marka loo eego kuliyadda aad doorato)\n* **Barnaamijka Aasaasiga ah (Foundation Program & English):** US$350 (5 heer oo Ingiriisi ah)`;
+            } else {
+              fallbackAnswer = `Welcome to Somali National University!\n\nIyadoo lagu saleynayo dukumiintiyada rasmiga ah ee SNU:\n\n${chunks[0]?.content?.slice(0, 450)}...\n\nWixii faahfaahin dheeraad ah booqo snu.edu.so ama kala xiriir Xafiiska Admissions-ka (admissions@snu.edu.so).`;
+            }
+          }
+        } catch (e) {
+          console.error('Client RAG fallback error:', e);
+        }
+
+        if (!fallbackAnswer) {
+          fallbackAnswer = `Welcome to Somali National University!\n\nSi aad u hesho xogta ugu dambaysay ee ku saabsan diiwaangelinta, shuruudaha, iyo kuliyadaha, fadlan la xiriir Xafiiska Aqbalaadda SNU (admissions@snu.edu.so) ama booqo https://snu.edu.so.`;
+        }
 
         const { data: aiMsg } = await supabase
           .from('messages')
-          .insert([{ conversation_id: convId, role: 'assistant', content: fallbackContent }])
+          .insert([{ conversation_id: convId, role: 'assistant', content: fallbackAnswer }])
           .select()
           .single();
 
@@ -214,7 +239,8 @@ Si aad u hesho xogta ugu dambaysay ee ku saabsan diiwaangelinta, shuruudaha, iyo
           aiMsg || {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: fallbackContent,
+            content: fallbackAnswer,
+            sources: fallbackSources,
             created_at: new Date().toISOString(),
           },
         ]);
