@@ -19,7 +19,7 @@ export const embeddingService = {
     const ai = getGenAI();
 
     if (ai && process.env.GEMINI_API_KEY) {
-      const modelsToTry = ['text-embedding-004', 'embedding-001', 'gemini-embedding-001'];
+      const modelsToTry = ['gemini-embedding-001', 'gemini-embedding-2', 'text-embedding-004', 'embedding-001'];
       for (const modelName of modelsToTry) {
         try {
           const response = await ai.models.embedContent({

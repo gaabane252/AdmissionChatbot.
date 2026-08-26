@@ -273,36 +273,37 @@ Si aad u hesho xogta ugu dambaysay ee ku saabsan diiwaangelinta, shuruudaha, iyo
       {/* Main Chat Interface */}
       <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#050b18] overflow-hidden relative transition-colors">
         {/* Top Header Navigation */}
-        <header className="h-16 bg-white/90 dark:bg-[#070d1a]/95 border-b border-slate-200 dark:border-sky-950/80 flex items-center justify-between px-4 md:px-6 z-10 backdrop-blur-xl transition-colors">
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-white/90 dark:bg-[#070d1a]/95 border-b border-slate-200 dark:border-sky-950/80 flex items-center justify-between px-3 sm:px-4 md:px-6 z-10 backdrop-blur-xl transition-colors gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
               aria-label="Open sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3">
-              <SnuLogo className="w-8 h-8 md:w-9 md:h-9" />
-              <div>
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <SnuLogo className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h1 className="font-extrabold text-sm md:text-base text-slate-900 dark:text-white tracking-tight leading-none font-display">
+                  <h1 className="font-extrabold text-sm md:text-base text-slate-900 dark:text-white tracking-tight leading-none font-display truncate">
                     SNU AI Assistant
                   </h1>
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800 flex-shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     2026 Admissions
                   </span>
                 </div>
-                <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                  Jaamacadda Ummadda Soomaaliyeed • Somali National University
+                <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 whitespace-nowrap">
+                  <span className="sm:hidden">Jaamacadda Ummadda Soomaaliyeed</span>
+                  <span className="hidden sm:inline">Jaamacadda Ummadda Soomaaliyeed • Somali National University</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <ThemeToggle />
           </div>
         </header>

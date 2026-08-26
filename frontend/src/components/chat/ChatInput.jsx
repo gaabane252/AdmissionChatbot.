@@ -31,7 +31,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
   };
 
   return (
-    <div className="p-3 md:p-5 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#030712] dark:via-[#030712]/95 dark:to-transparent border-t border-slate-200/80 dark:border-sky-950/50 pb-safe transition-colors">
+    <div className="p-3 sm:p-4 md:p-5 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#030712] dark:via-[#030712]/95 dark:to-transparent border-t border-slate-200/80 dark:border-sky-950/50 pb-4 sm:pb-5 transition-colors">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
         <div className="relative flex items-end bg-slate-50 dark:bg-[#0c1427]/90 border border-slate-300 dark:border-sky-900/50 rounded-2xl shadow-lg dark:shadow-xl dark:shadow-black/40 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20 transition-all backdrop-blur-xl">
           <textarea
@@ -60,12 +60,12 @@ const ChatInput = ({ onSendMessage, disabled }) => {
         </div>
 
         {/* Footer Hint / Brand Note */}
-        <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            <span>Jaamacadda Ummadda Soomaaliyeed • Admissions 2026</span>
+        <div className="flex items-center justify-between mt-2 px-1 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+            <span className="truncate">Jaamacadda Ummadda Soomaaliyeed • Admissions 2026</span>
           </div>
-          <span className="hidden sm:inline-block text-[10px] text-slate-400 dark:text-slate-600">
+          <span className="hidden sm:inline-block text-[10px] text-slate-400 dark:text-slate-600 flex-shrink-0 ml-2">
             Press <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[10px] text-slate-600 dark:text-slate-400">Enter ↵</kbd> to send
           </span>
         </div>

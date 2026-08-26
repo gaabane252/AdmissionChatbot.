@@ -79,13 +79,32 @@ export const ragService = {
     const contextText = retrievedChunks.map((c, i) => `[Source ${i + 1}]:\n${c.content}`).join('\n\n');
     const sources = [...new Set(retrievedChunks.map(c => c.metadata?.file_name || 'Official SNU Document'))];
 
-    const systemPrompt = `You are the official SNU AI Admission Assistant for Somali National University (SNU).
-Your job is to assist students with friendly, accurate, and professional information regarding SNU admissions, faculties, programs, tuition fees, registration deadlines, and campus life.
+    const systemPrompt = `You are the official SNU AI Admission Assistant for Somali National University (Jaamacadda Ummadda Soomaaliyeed - SNU).
 
-Use the provided Knowledge Base context below to answer the user's question accurately.
-If the information is not present in the context, provide a helpful general response about SNU and politely suggest contacting the SNU Registrar Office (admissions@snu.edu.so).
+YOUR OBJECTIVE:
+Provide welcoming, accurate, well-structured, and helpful admission guidance to prospective and current students strictly grounded in the official SNU documentation context provided below.
 
-Knowledge Base Context:
+CRITICAL INSTRUCTIONS & RULES:
+1. MANDATORY OPENING:
+Every single response MUST start with:
+"Welcome to Somali National University!"
+Followed by a line break, and then proceed directly with the helpful, structured answer.
+
+2. LANGUAGE MATCHING & QUALITY:
+- If the student's question is in Somali (Af-Soomaali), respond fluently, clearly, and professionally in Somali using natural vocabulary, bullet points, and proper grammar.
+- If the student's question is in English, respond in clear, professional, and well-structured English.
+
+3. ANSWERING ADMISSION & REGISTRATION INQUIRIES:
+- Ground your answers in the Knowledge Base Context below.
+- When students ask about registration requirements, documents needed (such as Secondary School Certificate, transcripts, National ID / birth certificate, passport photos, application fee of US$55, application form, and entrance exams/interviews), faculties, tuition (which is tuition-free for undergraduate programs), administrative charges per faculty, or steps to apply, extract and explain these details clearly.
+- If a student specifies an academic year (e.g. 2025, 2026, or current/upcoming year), provide the official admission requirements, required documents, and application steps from the context to guide them fully.
+
+4. MISSING OR OUT-OF-SCOPE QUESTIONS:
+- Only if the student's question is completely unrelated to SNU / university admissions or cannot be answered from the context:
+  * In Somali, respond: "Xogtaan ma hayo maadaama aysan ku jirin dukumiintiyada rasmiga ah ee jaamacadda SNU. Fadlan wixii faahfaahin dheeraad ah kala xiriir Xafiiska Admission-ka SNU (admissions@snu.edu.so)."
+  * In English, respond: "I do not have this information in the official SNU documents. For further details, please contact the SNU Admissions Office at admissions@snu.edu.so."
+
+Official Knowledge Base Context:
 ---
 ${contextText || 'No specific document context found.'}
 ---
@@ -94,14 +113,21 @@ ${contextText || 'No specific document context found.'}
     const ai = getGenAI();
 
     if (ai && process.env.GEMINI_API_KEY) {
-      const modelsToTry = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
+      const modelsToTry = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.7-flash'];
       
       for (const modelName of modelsToTry) {
         try {
           const responseStream = await ai.models.generateContentStream({
             model: modelName,
             contents: [
-              { role: 'user', parts: [{ text: `${systemPrompt}\n\nStudent Question: ${query}\n\nNote: If the student asks in Somali, please respond fluently in Somali. If in English, respond in English.` }] }
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: `${systemPrompt}\n\nStudent Question: ${query}\n\nReminder:\n- Start response with "Welcome to Somali National University!"\n- Match the student's language (Somali for Somali, English for English).\n- Provide clear, helpful, bulleted details based on the context.`
+                  }
+                ]
+              }
             ]
           });
 
@@ -113,7 +139,7 @@ ${contextText || 'No specific document context found.'}
           }
 
           if (fullText && fullText.trim()) {
-            return { answer: fullText, sources, retrievedChunks };
+            return { answer: fullText.trim(), sources, retrievedChunks };
           }
         } catch (err) {
           console.warn(`Gemini generation with ${modelName} failed, trying next:`, err.message || err);
@@ -121,12 +147,11 @@ ${contextText || 'No specific document context found.'}
       }
     }
 
-    const fallbackAnswer = `Welcome to Somali National University! 
+    const isSomali = /(maxay|sidee|waa|iyo|ku|ah|ma|yahay|tahay|fadlan|kulliyad|jaamacad|shuruud|lacag|dufcad|dhigasho|waxbarasho|somal|keen|qab|maalin|dukument|shahaado)/i.test(query);
 
-Based on official SNU guidelines:
-${retrievedChunks.length > 0 ? contextText.slice(0, 300) + '...' : 'SNU offers undergraduate programs across Medicine, Engineering, Education, Agriculture, Economics, and Law.'}
-
-For further details or official application forms, please visit the SNU Admissions Office or email admissions@snu.edu.so.`;
+    const fallbackAnswer = isSomali
+      ? `Welcome to Somali National University!\n\n${retrievedChunks.length > 0 ? 'Iyadoo lagu saleynayo dukumiintiyada rasmiga ah ee SNU:\n\n' + retrievedChunks.map(c => c.content).join('\n\n').slice(0, 500) + '...' : 'Xogtaan ma hayo maadaama aysan ku jirin dukumiintiyada rasmiga ah ee jaamacadda SNU. Fadlan wixii faahfaahin dheeraad ah kala xiriir Xafiiska Admission-ka SNU (admissions@snu.edu.so).'}`
+      : `Welcome to Somali National University!\n\n${retrievedChunks.length > 0 ? 'Based on official SNU documents:\n\n' + retrievedChunks.map(c => c.content).join('\n\n').slice(0, 500) + '...' : 'I do not have this information in the official SNU documents. For further details, please contact the SNU Admissions Office at admissions@snu.edu.so.'}`;
 
     if (onChunk) {
       onChunk(fallbackAnswer);
